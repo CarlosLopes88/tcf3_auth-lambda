@@ -1,0 +1,13 @@
+{
+    "name": "auth-lambda",
+    "version": "1.0.0",
+    "description": "Função Lambda para autenticação de cliente por CPF",
+    "main": "authLambda.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+      "mongoose": "^6.0.0",
+      "jsonwebtoken": "^8.5.1"
+    }
+  }
