@@ -1,5 +1,6 @@
-name: Deploy Lambda Function
+name: Deploy Lambda Function  # Nome do workflow de GitHub Actions
 
+# O workflow será executado quando houver um push na branch 'main'
 on:
   push:
     branches:
@@ -7,55 +8,56 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # O job será executado em um ambiente Ubuntu na versão mais recente.
+    
     steps:
-    # Checkout do código
+    
+    # 1. Etapa para fazer o checkout do código do repositório
     - name: Checkout code
-      uses: actions/checkout@v2
-
-    # Configurar o Node.js para instalar dependências
+      uses: actions/checkout@v2  # Usa a ação oficial do GitHub para realizar o checkout do repositório na versão 2.
+    
+    # 2. Configura o ambiente Node.js
     - name: Set up Node.js
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v2  # Usa a ação para configurar o Node.js.
       with:
-        node-version: '20'
+        node-version: '20'  # Define a versão do Node.js como 20.
 
-    # Instalar dependências
+    # 3. Instala as dependências do projeto dentro do diretório 'auth-lambda'
     - name: Install dependencies
-      run: npm install
-      working-directory: ./auth-lambda
-
-    # Compactar os arquivos da função Lambda e mover para o diretório terraform
+      run: npm install  # Executa o comando para instalar as dependências usando npm.
+      working-directory: ./auth-lambda  # Define o diretório de trabalho onde o comando será executado (pasta da função Lambda).
+    
+    # 4. Compacta os arquivos da função Lambda em um arquivo ZIP
     - name: Package Lambda
       run: |
-        zip -r function.zip .
-        mv function.zip ./terraform/  # Mover o zip para o diretório do Terraform
-      working-directory: ./auth-lambda
+        zip -r function.zip .  # Cria um arquivo ZIP contendo todos os arquivos do diretório atual.
+        mv function.zip ./terraform/  # Move o arquivo ZIP para o diretório 'terraform' onde o Terraform será executado.
+      working-directory: ./auth-lambda  # O comando é executado na pasta da função Lambda.
 
-    # Configurar as credenciais AWS com secrets
+    # 5. Configura as credenciais da AWS usando secrets armazenados no GitHub
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v1  # Usa a ação para configurar as credenciais da AWS.
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}  # Acessa a secret 'AWS_ACCESS_KEY_ID' armazenada no GitHub.
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}  # Acessa a secret 'AWS_SECRET_ACCESS_KEY' do GitHub.
+        aws-region: ${{ secrets.AWS_REGION }}  # Acessa a secret 'AWS_REGION' do GitHub para definir a região da AWS.
 
-    # Setup Terraform
+    # 6. Configura o Terraform no ambiente
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
+      uses: hashicorp/setup-terraform@v1  # Usa a ação oficial para configurar o Terraform.
       with:
-        terraform_version: 1.5.0
+        terraform_version: 1.5.0  # Define a versão do Terraform como 1.5.0.
 
-    # Inicializar o Terraform
+    # 7. Inicializa o Terraform no diretório 'terraform'
     - name: Terraform Init
-      run: terraform init
-      working-directory: ./auth-lambda/terraform
+      run: terraform init  # Executa o comando 'terraform init' para inicializar o diretório de trabalho do Terraform.
+      working-directory: ./auth-lambda/terraform  # Define o diretório onde o Terraform será inicializado.
 
-    # Aplicar o Terraform com a variável MONGO_URI passada do Secret do GitHub
+    # 8. Aplica a configuração do Terraform para fazer o deploy da função Lambda
     - name: Terraform Apply
-      run: terraform apply -var="mongo_uri=${{ secrets.MONGO_URI }}" -auto-approve
-      working-directory: ./auth-lambda/terraform
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
-        
+      run: terraform apply -var="mongo_uri=${{ secrets.MONGO_URI }}" -auto-approve  # Aplica a infraestrutura com o Terraform passando a variável 'mongo_uri' como input.
+      working-directory: ./auth-lambda/terraform  # Define o diretório onde o Terraform será aplicado.
+      env:  # Define as variáveis de ambiente usadas pelo Terraform (credenciais da AWS).
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}  # Variável de ambiente para o ID da chave de acesso da AWS.
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}  # Variável de ambiente para a chave secreta da AWS.
+        AWS_REGION: ${{ secrets.AWS_REGION }}  # Variável de ambiente para a região da AWS.
