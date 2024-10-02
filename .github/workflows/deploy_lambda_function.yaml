@@ -2,7 +2,7 @@ name: Deploy Lambda Function  # Nome do workflow de GitHub Actions
 
 # O workflow será executado quando houver um push na branch 'main'
 on:
-  push:
+  pull_request:
     branches:
       - main
 
